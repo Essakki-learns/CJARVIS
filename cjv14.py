@@ -24,7 +24,7 @@ ist = pytz.timezone('Asia/Kolkata')
 # ==========================================
 # 2. STATE MANAGEMENT
 # ==========================================
-PAGES = [
+ALL_PAGES = [
     "⚡ Home Base",
     "💰 Budget Tracker & Analytics",
     "🏋️ Habit Tracker",
@@ -35,8 +35,9 @@ PAGES = [
     "📖 User Guide",
     "⚙️ Settings"
 ]
+MAIN_PAGES = ALL_PAGES[:6]
+EXTRA_PAGES = ALL_PAGES[6:]
 
-# Default habits
 DEFAULT_HABITS = [
     {"id": "1", "name": "Physical Exercise", "emoji": "🏋️", "streak": 0, "last_checkin": None, "active": True},
     {"id": "2", "name": "Reading", "emoji": "📖", "streak": 0, "last_checkin": None, "active": True},
@@ -73,12 +74,14 @@ def init_state():
         'habits': DEFAULT_HABITS.copy(),
         'theme': 'dark',
         'weekly_history': [None]*7,
+        # Radio tracking to avoid infinite loops
+        'last_main_selection': "⚡ Home Base",
+        'last_extra_selection': "📋 Activity Log",
     }
     for key, default_val in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = default_val
 
-    # Ensure subjects have modules
     for subj in st.session_state.subjects:
         if subj['name'] not in st.session_state.modules:
             st.session_state.modules[subj['name']] = []
@@ -132,89 +135,49 @@ def save_to_gist(token, gist_id):
         return False
 
 # ==========================================
-# 4. THEME ENGINE (with gradients)
+# 4. THEME ENGINE
 # ==========================================
 def get_theme_css(theme_name):
     themes = {
         'dark': {
-            'bg': '#0E0E0E',
-            'bg_grad': 'linear-gradient(135deg, #0E0E0E, #1A1A2E)',
-            'card': '#1A1A1A',
-            'border': '#2C2C2C',
-            'text': '#E8E8E8',
-            'heading': '#FFFFFF',
-            'label': '#A8A8A8',
-            'accent': '#6C63FF',
-            'accent2': '#FF6584',
-            'success': '#4ECDC4',
-            'warning': '#FFD93D',
-            'danger': '#FF6584',
+            'bg': '#0E0E0E', 'bg_grad': 'linear-gradient(135deg, #0E0E0E, #1A1A2E)',
+            'card': '#1A1A1A', 'border': '#2C2C2C', 'text': '#E8E8E8',
+            'heading': '#FFFFFF', 'label': '#A8A8A8', 'accent': '#6C63FF',
+            'accent2': '#FF6584', 'success': '#4ECDC4', 'warning': '#FFD93D', 'danger': '#FF6584',
         },
         'light': {
-            'bg': '#F5F5F5',
-            'bg_grad': 'linear-gradient(135deg, #F5F5F5, #E8E8F0)',
-            'card': '#FFFFFF',
-            'border': '#DDDDDD',
-            'text': '#222222',
-            'heading': '#111111',
-            'label': '#666666',
-            'accent': '#6C63FF',
-            'accent2': '#FF6584',
-            'success': '#2E7D32',
-            'warning': '#F9A825',
-            'danger': '#C62828',
+            'bg': '#F5F5F5', 'bg_grad': 'linear-gradient(135deg, #F5F5F5, #E8E8F0)',
+            'card': '#FFFFFF', 'border': '#DDDDDD', 'text': '#222222',
+            'heading': '#111111', 'label': '#666666', 'accent': '#6C63FF',
+            'accent2': '#FF6584', 'success': '#2E7D32', 'warning': '#F9A825', 'danger': '#C62828',
         },
         'blue': {
-            'bg': '#0A192F',
-            'bg_grad': 'linear-gradient(135deg, #0A192F, #1A365D)',
-            'card': '#112240',
-            'border': '#233554',
-            'text': '#E6F1FF',
-            'heading': '#64FFDA',
-            'label': '#8892B0',
-            'accent': '#64FFDA',
-            'accent2': '#FF6B6B',
-            'success': '#4ECDC4',
-            'warning': '#FFD93D',
-            'danger': '#FF6B6B',
+            'bg': '#0A192F', 'bg_grad': 'linear-gradient(135deg, #0A192F, #1A365D)',
+            'card': '#112240', 'border': '#233554', 'text': '#E6F1FF',
+            'heading': '#64FFDA', 'label': '#8892B0', 'accent': '#64FFDA',
+            'accent2': '#FF6B6B', 'success': '#4ECDC4', 'warning': '#FFD93D', 'danger': '#FF6B6B',
         },
         'purple': {
-            'bg': '#1A0A2E',
-            'bg_grad': 'linear-gradient(135deg, #1A0A2E, #3A1A5E)',
-            'card': '#2A1A3E',
-            'border': '#3A2A4E',
-            'text': '#E8E0F0',
-            'heading': '#D4BFFF',
-            'label': '#B09CC0',
-            'accent': '#B388FF',
-            'accent2': '#FF80AB',
-            'success': '#69DB7C',
-            'warning': '#FFD93D',
-            'danger': '#FF80AB',
+            'bg': '#1A0A2E', 'bg_grad': 'linear-gradient(135deg, #1A0A2E, #3A1A5E)',
+            'card': '#2A1A3E', 'border': '#3A2A4E', 'text': '#E8E0F0',
+            'heading': '#D4BFFF', 'label': '#B09CC0', 'accent': '#B388FF',
+            'accent2': '#FF80AB', 'success': '#69DB7C', 'warning': '#FFD93D', 'danger': '#FF80AB',
         },
         'gradient': {
-            'bg': '#0F0C29',
-            'bg_grad': 'linear-gradient(135deg, #0F0C29, #302B63, #24243E)',
-            'card': 'rgba(255,255,255,0.08)',
-            'border': 'rgba(255,255,255,0.15)',
-            'text': '#F0F0FF',
-            'heading': '#FFFFFF',
-            'label': '#C0C0E0',
-            'accent': '#6C63FF',
-            'accent2': '#FF6584',
-            'success': '#69DB7C',
-            'warning': '#FFD93D',
-            'danger': '#FF6584',
+            'bg': '#0F0C29', 'bg_grad': 'linear-gradient(135deg, #0F0C29, #302B63, #24243E)',
+            'card': 'rgba(255,255,255,0.08)', 'border': 'rgba(255,255,255,0.15)',
+            'text': '#F0F0FF', 'heading': '#FFFFFF', 'label': '#C0C0E0',
+            'accent': '#6C63FF', 'accent2': '#FF6584', 'success': '#69DB7C',
+            'warning': '#FFD93D', 'danger': '#FF6584',
         }
     }
     t = themes.get(theme_name, themes['dark'])
-    # Convert hex to RGB for alpha
     def hex_to_rgb(h):
         h = h.lstrip('#')
         return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
     accent_rgb = hex_to_rgb(t['accent'])
     accent2_rgb = hex_to_rgb(t['accent2'])
-    
+
     css = f"""
     <style>
         :root {{
@@ -233,19 +196,6 @@ def get_theme_css(theme_name):
             --accent-rgb: {accent_rgb[0]},{accent_rgb[1]},{accent_rgb[2]};
             --accent2-rgb: {accent2_rgb[0]},{accent2_rgb[1]},{accent2_rgb[2]};
         }}
-
-        /* HIDE DEPLOY BUTTON */
-        .stDeployButton {{
-            display: none !important;
-        }}
-        .stAppDeployButton {{
-            display: none !important;
-        }}
-        [data-testid="stToolbar"] {{
-            display: none !important;
-        }}
-
-        /* MAIN BACKGROUND */
         .stApp {{
             background: var(--bg-grad) !important;
             color: var(--text) !important;
@@ -264,8 +214,6 @@ def get_theme_css(theme_name):
         section.main {{
             padding-top: 0rem !important;
         }}
-
-        /* METRICS */
         div[data-testid="metric-container"] {{
             background: var(--card-bg) !important;
             border: 1px solid var(--border) !important;
@@ -285,8 +233,6 @@ def get_theme_css(theme_name):
             color: var(--label) !important;
             font-weight: 600;
         }}
-
-        /* CARDS */
         .cjarvis-card {{
             background: var(--card-bg) !important;
             border: 1px solid var(--border) !important;
@@ -326,8 +272,6 @@ def get_theme_css(theme_name):
             color: var(--label) !important;
             line-height: 1.5;
         }}
-
-        /* STREAK BADGE */
         .duo-streak {{
             background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
             color: white !important;
@@ -342,8 +286,6 @@ def get_theme_css(theme_name):
             box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.25);
             text-align: center;
         }}
-
-        /* WEEK CONTAINER */
         .week-container {{
             display: flex;
             justify-content: center;
@@ -396,8 +338,6 @@ def get_theme_css(theme_name):
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }}
-
-        /* MODULE ROWS */
         .module-row {{
             display: flex;
             align-items: center;
@@ -412,8 +352,6 @@ def get_theme_css(theme_name):
         .module-pending {{
             color: #666;
         }}
-
-        /* DIGEST */
         .digest-item {{
             background: var(--card-bg);
             border-left: 3px solid var(--accent);
@@ -425,8 +363,6 @@ def get_theme_css(theme_name):
             font-family: 'JetBrains Mono', monospace;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }}
-
-        /* DATE */
         .live-date {{
             font-size: 1.1rem;
             color: var(--label);
@@ -436,8 +372,6 @@ def get_theme_css(theme_name):
             letter-spacing: 3px;
             font-weight: 600;
         }}
-
-        /* HERO */
         .hero-title {{
             color: var(--heading);
             font-weight: 800;
@@ -457,20 +391,14 @@ def get_theme_css(theme_name):
             letter-spacing: 2px;
             opacity: 0.8;
         }}
-
-        /* ATTENDANCE BADGES */
         .att-safe {{ color: var(--success); font-weight: 700; }}
         .att-warning {{ color: var(--warning); font-weight: 700; }}
         .att-danger {{ color: var(--danger); font-weight: 700; }}
         .exam-soon {{ color: var(--danger); font-weight: 700; font-size: 12px; }}
         .exam-ok {{ color: var(--success); font-weight: 700; font-size: 12px; }}
-
-        /* MOOD */
         .mood-score-high {{ color: var(--success); font-weight: 800; font-size: 18px; font-family: 'JetBrains Mono', monospace; }}
         .mood-score-mid {{ color: var(--warning); font-weight: 800; font-size: 18px; font-family: 'JetBrains Mono', monospace; }}
         .mood-score-low {{ color: var(--danger); font-weight: 800; font-size: 18px; font-family: 'JetBrains Mono', monospace; }}
-
-        /* BUTTONS */
         .stButton button {{
             background: var(--accent) !important;
             color: white !important;
@@ -496,8 +424,6 @@ def get_theme_css(theme_name):
             background: #333 !important;
             border-color: var(--accent) !important;
         }}
-
-        /* SIDEBAR */
         section[data-testid="stSidebar"] {{
             background: var(--bg) !important;
             border-right: 1px solid var(--border) !important;
@@ -520,8 +446,6 @@ def get_theme_css(theme_name):
             color: var(--text) !important;
             border: 1px solid var(--border) !important;
         }}
-
-        /* TABS */
         .stTabs [data-baseweb="tab-list"] button {{
             color: var(--label) !important;
             font-weight: 600;
@@ -531,8 +455,6 @@ def get_theme_css(theme_name):
             color: var(--accent) !important;
             border-bottom-color: var(--accent) !important;
         }}
-
-        /* EXPANDER */
         .streamlit-expanderHeader {{
             color: var(--text) !important;
             background: var(--card-bg) !important;
@@ -542,13 +464,9 @@ def get_theme_css(theme_name):
         .streamlit-expanderHeader:hover {{
             border-color: var(--accent) !important;
         }}
-
-        /* PROGRESS */
         .stProgress > div > div {{
             background: var(--accent) !important;
         }}
-
-        /* DATAFRAME */
         .stDataFrame {{
             background: var(--card-bg) !important;
             border-radius: 12px !important;
@@ -561,8 +479,6 @@ def get_theme_css(theme_name):
         .stDataFrame tbody tr td {{
             color: var(--text) !important;
         }}
-
-        /* ALERTS */
         .stAlert {{
             border-radius: 12px !important;
             border-left: 4px solid var(--accent) !important;
@@ -571,19 +487,14 @@ def get_theme_css(theme_name):
         .stAlert[data-baseweb="notification"] {{
             background: var(--card-bg) !important;
         }}
-
-        /* CODE */
         .stCodeBlock {{
             background: var(--card-bg) !important;
             border-radius: 12px !important;
             border: 1px solid var(--border) !important;
         }}
-
         img {{
             border-radius: 12px;
         }}
-
-        /* TODO */
         .todo-item {{
             display: flex;
             align-items: center;
@@ -598,8 +509,6 @@ def get_theme_css(theme_name):
         .todo-item .task-pending {{
             color: var(--text);
         }}
-
-        /* RESPONSIVE */
         @media (max-width: 640px) {{
             .block-container {{
                 padding-left: 1rem !important;
@@ -624,7 +533,7 @@ def apply_theme():
 apply_theme()
 
 # ==========================================
-# 5. CORE ENGINE FUNCTIONS
+# 5. CORE FUNCTIONS
 # ==========================================
 def log_action(action):
     timestamp = datetime.now(ist).strftime("%Y-%m-%d %H:%M:%S")
@@ -643,7 +552,6 @@ def process_transaction(txn_type, amount, category, note):
         st.session_state.balance += amount
     else:
         return False
-    
     txn_time = datetime.now(ist).strftime("%Y-%m-%d %H:%M")
     st.session_state.transactions.insert(0, {
         "Date": txn_time, "Type": txn_type, "Category": category,
@@ -678,16 +586,12 @@ def generate_digest():
         pct, safe, label, _ = get_attendance_status(subj["total"], subj["attended"])
         if label == "Danger": digest.append(f"🚨 {subj['name']}: Critical at {pct:.0f}%. Attend immediately.")
         elif label == "On Edge": digest.append(f"⚠️ {subj['name']}: {pct:.0f}% — {safe} skips left.")
-    
     total_spent = sum(t["Amount (₹)"] for t in st.session_state.transactions if t["Type"] == "Expense")
     if total_spent > 0:
         digest.append(f"💸 ₹{total_spent:,.0f} spent. Remaining: ₹{st.session_state.balance:,.0f}.")
     digest.append(f"🔥 Habit Streak: {st.session_state.streak} days. Keep it up!")
     return digest
 
-# ==========================================
-# 6. HABIT FUNCTIONS
-# ==========================================
 def check_weekly_reset():
     today = date.today()
     week_num = today.isocalendar()[1]
@@ -698,7 +602,20 @@ def check_weekly_reset():
     return (today.weekday() + 1) % 7
 
 # ==========================================
-# 7. SIDEBAR & NAVIGATION
+# 6. PAGE NAVIGATION HELPER
+# ==========================================
+def set_page(page):
+    if page != st.session_state.current_page:
+        st.session_state.current_page = page
+        # Update last selections so radios stay in sync
+        if page in MAIN_PAGES:
+            st.session_state.last_main_selection = page
+        else:
+            st.session_state.last_extra_selection = page
+        st.rerun()
+
+# ==========================================
+# 7. SIDEBAR NAVIGATION (TWO RADIOS WITH TRACKING)
 # ==========================================
 with st.sidebar:
     user_name = st.session_state.get('user_name', 'Monolith Agent')
@@ -740,15 +657,28 @@ with st.sidebar:
     st.metric("Wallet Balance", f"₹{st.session_state.balance:,.2f}")
     total_budget = sum(st.session_state.monthly_budget.values())
     st.metric("Monthly Budget", f"₹{total_budget:,.2f}")
-    
+
     st.markdown("---")
-    # Full page list (including Settings, Guide, Log) in one radio
-    try:
-        rad_idx = PAGES.index(st.session_state.current_page)
-    except ValueError:
-        rad_idx = 0
-    selected_page = st.radio("System Modules", PAGES, index=rad_idx)
-    st.session_state.current_page = selected_page
+    st.markdown("### Main Modules")
+    # Main radio – use last_main_selection to avoid automatic change
+    main_idx = MAIN_PAGES.index(st.session_state.last_main_selection) if st.session_state.last_main_selection in MAIN_PAGES else 0
+    main_selection = st.radio("", MAIN_PAGES, index=main_idx, key="main_radio", label_visibility="collapsed")
+    if main_selection != st.session_state.last_main_selection:
+        # User clicked a different main page
+        st.session_state.last_main_selection = main_selection
+        if main_selection != st.session_state.current_page:
+            set_page(main_selection)
+
+    st.markdown("---")
+    st.markdown("### Settings & Info")
+    # Extra radio – similar tracking
+    extra_idx = EXTRA_PAGES.index(st.session_state.last_extra_selection) if st.session_state.last_extra_selection in EXTRA_PAGES else 0
+    extra_selection = st.radio("", EXTRA_PAGES, index=extra_idx, key="extra_radio", label_visibility="collapsed")
+    if extra_selection != st.session_state.last_extra_selection:
+        # User clicked a different extra page
+        st.session_state.last_extra_selection = extra_selection
+        if extra_selection != st.session_state.current_page:
+            set_page(extra_selection)
 
     # Dashboard widgets (only on Home Base)
     if st.session_state.current_page == "⚡ Home Base":
@@ -762,13 +692,12 @@ with st.sidebar:
         st.session_state.dashboard_widgets = widgets
 
 # ==========================================
-# 8. MAIN VIEWS
+# 8. PAGE HANDLERS
 # ==========================================
 now_time = datetime.now(ist)
 today_str = now_time.strftime("%B %d, %Y")
 day_index = check_weekly_reset()
 
-# Quote
 QUOTES = [
     "The only easy day was yesterday.",
     "Success is not for the lazy.",
@@ -784,14 +713,11 @@ QUOTES = [
 quote = random.choice(QUOTES)
 
 if st.session_state.current_page == "⚡ Home Base":
-    
     st.markdown(f"<div class='duo-streak'>HABIT STREAK: {st.session_state.streak}</div>", unsafe_allow_html=True)
     st.markdown("<h1 class='hero-title'>CJARVIS</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 class='hero-subtitle' style='color:var(--accent2);'>{quote}</h3>", unsafe_allow_html=True)
-    
     st.markdown(f"<div class='live-date'>{now_time.strftime('%A • %d %B %Y')}</div>", unsafe_allow_html=True)
 
-    # Banner
     if st.session_state.custom_banner is not None:
         st.image(st.session_state.custom_banner, use_container_width=True)
     elif st.session_state.custom_banner_url:
@@ -799,7 +725,6 @@ if st.session_state.current_page == "⚡ Home Base":
     else:
         st.image("https://placehold.co/1200x260/1A1A1A/6C63FF?text=Upload+a+banner+in+Settings", use_container_width=True)
 
-    # Weekly Grid
     days_labels = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
     html_nodes = ""
     for i, status in enumerate(st.session_state.weekly_history):
@@ -808,17 +733,14 @@ if st.session_state.current_page == "⚡ Home Base":
         html_nodes += f"<div class='day-node'><div class='circle {cls}'>{icon}</div><div class='day-label'>{days_labels[i]}</div></div>"
     st.markdown(f"<div class='week-container'>{html_nodes}</div>", unsafe_allow_html=True)
 
-    # Dashboard
     st.subheader("⚡ System Dashboard")
     widgets = st.session_state.dashboard_widgets
     if widgets:
-        # Separate metric widgets from expandable ones
         expandable = ["Daily Digest", "Recent Transactions", "Upcoming Deadlines", "Attendance Summary", "Mood"]
         metric_widgets = [w for w in widgets if w not in expandable and w != "To-Do List"]
         cols = st.columns(len(metric_widgets) if metric_widgets else 1)
         col_idx = 0
 
-        # Metric widgets
         if "Balance" in widgets:
             with cols[col_idx]:
                 st.metric("Balance", f"₹{st.session_state.balance:,.0f}")
@@ -838,7 +760,6 @@ if st.session_state.current_page == "⚡ Home Base":
                 st.metric("Habit Streak", f"{st.session_state.streak} days", delta="🔥 Keep going!" if st.session_state.streak > 0 else "Start today!")
             col_idx += 1
 
-        # To-Do List (always visible)
         if "To-Do List" in widgets:
             st.markdown("### 📝 To-Do List")
             with st.container():
@@ -891,7 +812,6 @@ if st.session_state.current_page == "⚡ Home Base":
             else:
                 st.caption("No tasks yet. Add one above!")
 
-        # Expandable widgets
         if "Daily Digest" in widgets:
             with st.expander("📋 Daily Digest", expanded=False):
                 if st.session_state.digest_generated_date != today_str:
@@ -951,8 +871,6 @@ if st.session_state.current_page == "⚡ Home Base":
                     st.caption("Mood not logged today.")
 
     st.markdown("---")
-    
-    # Deadlines (shown as cards)
     st.subheader("⏳ Deadline Countdown")
     if st.session_state.deadlines:
         cd_cols = st.columns(min(len(st.session_state.deadlines), 4))
@@ -978,35 +896,25 @@ if st.session_state.current_page == "⚡ Home Base":
         st.info("No deadlines set. Add them in Settings.")
 
     st.markdown("---")
-
-    # Quick-Nav Cards
     c1, c2 = st.columns(2)
     with c1:
         st.markdown("""<div class="cjarvis-card"><div class="card-icon">💰</div><div class="card-title">FINANCIAL LEDGER</div>
         <div class="card-text">Monitor strict capital outflows.</div></div>""", unsafe_allow_html=True)
         if st.button("ACCESS LEDGER →", key="nav_budget", use_container_width=True):
-            st.session_state.current_page = "💰 Budget Tracker & Analytics"
-            st.rerun()
-
+            set_page("💰 Budget Tracker & Analytics")
         st.markdown("""<div class="cjarvis-card"><div class="card-icon">📚</div><div class="card-title">ACADEMIC VAULT</div>
         <div class="card-text">Track attendance and syllabus modules.</div></div>""", unsafe_allow_html=True)
         if st.button("ACCESS ACADEMICS →", key="nav_subject", use_container_width=True):
-            st.session_state.current_page = "📚 Subject Tracker (Academic)"
-            st.rerun()
-    
+            set_page("📚 Subject Tracker (Academic)")
     with c2:
         st.markdown("""<div class="cjarvis-card"><div class="card-icon">🏋️</div><div class="card-title">HABIT TRACKER</div>
         <div class="card-text">Track your daily habits and streaks.</div></div>""", unsafe_allow_html=True)
         if st.button("ACCESS HABITS →", key="nav_habit", use_container_width=True):
-            st.session_state.current_page = "🏋️ Habit Tracker"
-            st.rerun()
-
+            set_page("🏋️ Habit Tracker")
         st.markdown("""<div class="cjarvis-card"><div class="card-icon">🤖</div><div class="card-title">CJ AGENT</div>
         <div class="card-text">Log expenses in Tamil/English/Tanglish with intelligent parsing.</div></div>""", unsafe_allow_html=True)
         if st.button("ACCESS CJ AGENT →", key="nav_ai", use_container_width=True):
-            st.session_state.current_page = "🤖 CJ Agent"
-            st.rerun()
-        
+            set_page("🤖 CJ Agent")
         if st.session_state.custom_banner is None and st.session_state.custom_banner_url:
             st.image(st.session_state.custom_banner_url, use_container_width=True)
 
@@ -1015,7 +923,6 @@ if st.session_state.current_page == "⚡ Home Base":
 # ==========================================
 elif st.session_state.current_page == "💰 Budget Tracker & Analytics":
     st.title("💰 Ledger & Analytics")
-
     with st.expander("⚙️ Wallet Setup & Budget", expanded=False):
         col1, col2 = st.columns(2)
         with col1:
@@ -1040,7 +947,6 @@ elif st.session_state.current_page == "💰 Budget Tracker & Analytics":
             st.write("**Current Sources:**")
             for s in st.session_state.income_sources:
                 st.caption(f"- {s['source']}: ₹{s['amount']} ({s['date']})")
-
         st.markdown("---")
         st.subheader("📊 Monthly Budget by Category")
         categories = ["Food", "Transport", "Groceries", "Shopping", "Stationery", "Personal Care", "Entertainment", "Bills", "Education", "Medical", "Other"]
@@ -1057,14 +963,12 @@ elif st.session_state.current_page == "💰 Budget Tracker & Analytics":
             st.success("Budget saved!")
 
     tab1, tab2, tab3 = st.tabs(["📒 Ledger", "📊 Analytics", "➕ Log Transaction"])
-
     with tab1:
         if st.session_state.transactions:
             df = pd.DataFrame(st.session_state.transactions)
             st.dataframe(df, use_container_width=True, hide_index=True)
         else:
             st.info("No transactions yet. Use the CJ Agent or log one manually below.")
-
     with tab2:
         if st.session_state.transactions:
             df = pd.DataFrame(st.session_state.transactions)
@@ -1078,7 +982,6 @@ elif st.session_state.current_page == "💰 Budget Tracker & Analytics":
                 daily_sum = daily_copy.groupby("Day")["Amount (₹)"].sum().reset_index()
                 st.subheader("Daily Spending Trend")
                 st.line_chart(daily_sum.set_index("Day"))
-
                 st.subheader("Budget vs Actual (Monthly)")
                 budget_data = []
                 for cat, budget in st.session_state.monthly_budget.items():
@@ -1092,7 +995,6 @@ elif st.session_state.current_page == "💰 Budget Tracker & Analytics":
                 st.info("Log some expenses to see charts.")
         else:
             st.info("No data available yet.")
-
     with tab3:
         st.subheader("Manual Expense Entry")
         c1, c2 = st.columns(2)
@@ -1112,20 +1014,17 @@ elif st.session_state.current_page == "💰 Budget Tracker & Analytics":
 # ==========================================
 elif st.session_state.current_page == "🏋️ Habit Tracker":
     st.title("🏋️ Habit Tracker")
-    
-    # Update habit streaks daily
     today_str = date.today().strftime("%B %d, %Y")
     for habit in st.session_state.habits:
         if habit['active'] and habit['last_checkin'] != today_str:
             habit['streak'] = 0
-    
     all_done = all(h['last_checkin'] == today_str for h in st.session_state.habits if h['active'])
     if all_done and any(h['active'] for h in st.session_state.habits):
         if st.session_state.last_streak_date != today_str:
             st.session_state.streak += 1
             st.session_state.last_streak_date = today_str
             log_action(f"Habit streak increased to {st.session_state.streak}")
-    
+
     st.subheader("📋 Your Habits")
     col1, col2 = st.columns([3,1])
     with col1:
@@ -1133,7 +1032,6 @@ elif st.session_state.current_page == "🏋️ Habit Tracker":
     with col2:
         if st.button("➕ Add Habit"):
             st.session_state['show_add_habit'] = True
-    
     if st.session_state.get('show_add_habit', False):
         with st.form("add_habit_form"):
             name = st.text_input("Habit name")
@@ -1155,7 +1053,6 @@ elif st.session_state.current_page == "🏋️ Habit Tracker":
                     st.rerun()
                 else:
                     st.warning("Name is required.")
-    
     for i, habit in enumerate(st.session_state.habits):
         if not habit['active']:
             continue
@@ -1190,11 +1087,9 @@ elif st.session_state.current_page == "🏋️ Habit Tracker":
                     st.session_state.habits.pop(i)
                     log_action(f"Deleted habit: {habit['name']}")
                     st.rerun()
-    
+
     st.markdown("---")
     st.metric("Overall Habit Streak", f"{st.session_state.streak} days", delta="🔥 Keep going!" if st.session_state.streak > 0 else "Start your streak today!")
-    
-    # To-Do List
     st.markdown("---")
     st.subheader("📝 To-Do List")
     with st.container():
@@ -1253,7 +1148,6 @@ elif st.session_state.current_page == "🏋️ Habit Tracker":
 elif st.session_state.current_page == "📚 Subject Tracker (Academic)":
     st.title("📚 Academic Command Centre")
     tab1, tab2 = st.tabs(["🏛️ Attendance Vault", "📖 Syllabus Modules"])
-    
     with tab1:
         with st.expander("➕ Add/Edit Subjects"):
             col1, col2 = st.columns(2)
@@ -1282,13 +1176,11 @@ elif st.session_state.current_page == "📚 Subject Tracker (Academic)":
                         log_action(f"Deleted subject: {del_subj}")
                         st.success(f"Deleted {del_subj}")
                         st.rerun()
-
         for i, subj in enumerate(st.session_state.subjects):
             pct, safe_or_needed, label, css_cls = get_attendance_status(subj["total"], subj["attended"])
             days_left = days_until(subj["exam_date"])
             exam_badge = f" <span class='exam-soon'>Exam in {days_left}d</span>" if days_left and days_left <= 14 else f" <span class='exam-ok'>Exam in {days_left}d</span>" if days_left else ""
             icon = "🔴" if label == "Danger" else "🟡" if label == "On Edge" else "🟢"
-            
             with st.expander(f"{icon} {subj['name']} — {pct:.0f}%", expanded=(label != "Safe")):
                 col1, col2, col3 = st.columns(3)
                 with col1: st.metric("Attendance", f"{subj['attended']}/{subj['total']}")
@@ -1296,7 +1188,6 @@ elif st.session_state.current_page == "📚 Subject Tracker (Academic)":
                     if label == "Danger": st.metric("Classes to Recover", f"{-safe_or_needed}", delta="⚠️ Below 75%", delta_color="inverse")
                     else: st.metric("Safe Skips Left", f"{safe_or_needed}")
                 with col3: st.markdown(f"<span class='{css_cls}'>{label}</span>{exam_badge}", unsafe_allow_html=True)
-                
                 c1, c2, _ = st.columns(3)
                 with c1:
                     if st.button("✅ Attended", key=f"att_{i}"):
@@ -1309,7 +1200,6 @@ elif st.session_state.current_page == "📚 Subject Tracker (Academic)":
                         st.session_state.subjects[i]["total"] += 1
                         log_action(f"Marked missed for {subj['name']}")
                         st.rerun()
-
     with tab2:
         subject_names = list(st.session_state.modules.keys())
         if subject_names:
@@ -1394,12 +1284,10 @@ elif st.session_state.current_page == "🤖 CJ Agent":
                 cat = "Other"
                 payment = "Unknown"
 
-                # Amount
                 amount_match = re.search(r'(\d+(?:\.\d+)?)', user_input)
                 if amount_match:
                     extracted_amt = float(amount_match.group(1))
 
-                # Enhanced category keywords
                 categories = {
                     "Food": ["food", "saapadu", "sapadu", "saaptom", "mess", "zomato", "swiggy", "biryani", "dosa", "idly", "idli", "chai", "tea", "lunch", "dinner", "breakfast", "kadai", "hotel", "restaurant", "parotta", "rice", "noodles", "coffee", "juice", "snack", "tiffin", "saap", "soru", "meals", "pizza", "burger", "sandwich", "pasta", "ice cream", "cake", "biscuit", "chocolate"],
                     "Transport": ["cab", "auto", "uber", "ola", "bus", "train", "metro", "petrol", "fuel", "ticket", "travel", "ride", "bike", "poyirundhen", "porom", "station", "share", "van", "flight", "ship", "boat"],
@@ -1417,7 +1305,6 @@ elif st.session_state.current_page == "🤖 CJ Agent":
                         cat = category
                         break
 
-                # Payment
                 if any(w in input_lower for w in ["cash", "paisa", "kaiyila", "hand", "notes", "coin"]):
                     payment = "Cash"
                 elif any(w in input_lower for w in ["upi", "gpay", "phonepe", "paytm", "online", "card", "neft", "transfer"]):
@@ -1459,11 +1346,8 @@ elif st.session_state.current_page == "🤖 CJ Agent":
         "Haircut 100 rupees cash",
         "Spent 180 on dinner at hotel",
         "Petrol 200 rupees pochu",
-        "food 150",
-        "bus ticket 50",
-        "new pen 20",
-        "electricity bill 500",
-        "movie ticket 250",
+        "food 150", "bus ticket 50", "new pen 20",
+        "electricity bill 500", "movie ticket 250",
     ]
     for ex in examples:
         st.code(ex)
@@ -1553,7 +1437,7 @@ elif st.session_state.current_page == "📖 User Guide":
 
     ---
 
-    #### ⚙️ Settings
+    #### ⚙️ Settings (in sidebar under "Settings & Info")
     - **User Name** – customise your display name.
     - **Theme** – choose from Dark, Light, Blue, Purple, or Gradient.
     - **Banner** – upload your own image or use a URL.
